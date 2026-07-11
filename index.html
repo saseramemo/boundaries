@@ -17,6 +17,8 @@
             padding: 20px;
             color: #8c8c8c;
             margin: 0;
+            /* Pastikan body tidak menyebabkan isu scroll pada html2canvas */
+            position: relative;
         }
         
         .controls {
@@ -41,6 +43,12 @@
         }
 
         /* Container Utama Template */
+        .wrapper {
+            /* Wrapper pelindung agar html2canvas tidak error karena flexbox body */
+            padding: 10px; 
+            background: #2c2c2c;
+        }
+
         #capture-area {
             background-color: #ffffff;
             width: 900px;
@@ -48,6 +56,7 @@
             border: 15px solid #a8a8a8;
             box-sizing: border-box;
             position: relative;
+            margin: 0 auto;
         }
 
         .credit {
@@ -157,7 +166,7 @@
             background: transparent;
         }
 
-        /* Sliders */
+        /* --- CUSTOM SLIDER UNTUK MENCEGAH BUG HTML2CANVAS --- */
         .slider-section {
             margin-bottom: 30px;
         }
@@ -165,36 +174,45 @@
         .slider-title {
             font-size: 18px;
             font-weight: bold;
-            margin-bottom: 15px;
+            margin-bottom: 10px;
         }
 
         .range-container {
             position: relative;
             margin-bottom: 40px;
+            padding: 0 10px;
         }
 
-        input[type="range"] {
-            width: 100%;
-            -webkit-appearance: none;
-            background: transparent;
-        }
-
-        input[type="range"]::-webkit-slider-runnable-track {
-            width: 100%;
-            height: 2px;
-            background: #9c9c9c;
-            border: none;
-        }
-
-        input[type="range"]::-webkit-slider-thumb {
-            -webkit-appearance: none;
-            border: 2px solid #9c9c9c;
-            height: 16px;
-            width: 16px;
-            border-radius: 50%;
-            background: #fff;
-            margin-top: -7px;
+        .custom-slider {
+            position: relative;
+            height: 24px;
             cursor: pointer;
+            width: 100%;
+        }
+
+        .slider-track {
+            position: absolute;
+            top: 10px;
+            left: 0;
+            width: 100%;
+            height: 4px;
+            background-color: #9c9c9c;
+            border-radius: 2px;
+            pointer-events: none; /* Supaya klik masuk ke custom-slider */
+        }
+
+        .slider-thumb {
+            position: absolute;
+            top: 2px;
+            left: 0%; /* Posisi diatur lewat JavaScript */
+            width: 20px;
+            height: 20px;
+            background-color: #fff;
+            border: 3px solid #9c9c9c;
+            border-radius: 50%;
+            transform: translateX(-50%);
+            pointer-events: none; /* Supaya klik masuk ke custom-slider */
+            transition: left 0.2s ease-out;
         }
 
         .range-labels {
@@ -203,6 +221,8 @@
             font-size: 10px;
             margin-top: 5px;
             text-align: center;
+            margin-left: -10px;
+            margin-right: -10px;
         }
         .range-labels div { width: 25%; }
 
@@ -273,85 +293,96 @@
         <button onclick="downloadImage()">Unduh sebagai Foto</button>
     </div>
 
-    <div id="capture-area">
-        <div class="credit">template by @Sasera</div>
-        
-        <div class="header">
-            <div class="title-box">Ketentuan Fanart Karakter</div>
-            <div class="legend">
-                <label class="checkbox-item"><input type="checkbox"> Ya</label>
-                <label class="checkbox-item"><input type="checkbox"> Tidak</label>
-                <label class="checkbox-item"><input type="checkbox"> Mungkin <span>(Harap konfirmasi)</span></label>
-            </div>
-        </div>
-
-        <div class="main-content">
-            <!-- Kolom Kiri -->
-            <div class="left-col">
-                <div class="char-info">
-                    <div class="image-box" onclick="document.getElementById('file-upload').click()">
-                        <span>Klik untuk mengunggah<br>gambar karakter</span>
-                        <img id="char-img" src="" alt="Karakter">
-                        <input type="file" id="file-upload" style="display: none;" accept="image/*" onchange="previewImage(event)">
-                    </div>
-                    <div class="info-fields">
-                        <div class="field">Nama: <input type="text" spellcheck="false"></div>
-                        <div class="field">Spesies: <input type="text" spellcheck="false"></div>
-                        <div class="field">Art Tag: <input type="text" spellcheck="false"></div>
-                    </div>
-                </div>
-
-                <div class="slider-section">
-                    <div class="slider-title">Lewd</div>
-                    <div class="range-container">
-                        <input type="range" min="0" max="3" value="0" step="1">
-                        <div class="range-labels">
-                            <div>Wholesome only</div>
-                            <div>Sexy<br>Dressed</div>
-                            <div>Naked<br>Tasteful</div>
-                            <div>Full NSFW</div>
-                        </div>
-                    </div>
-
-                    <div class="slider-title">Blood & Gore</div>
-                    <div class="range-container">
-                        <input type="range" min="0" max="3" value="0" step="1">
-                        <div class="range-labels">
-                            <div>Tanpa Luka<br>Tanpa Memar</div>
-                            <div>Sedikit Darah<br>Tanpa Memar</div>
-                            <div>Darah & Memar<br>Signifikan</div>
-                            <div>Full NSFW</div>
-                        </div>
-                    </div>
+    <div class="wrapper">
+        <div id="capture-area">
+            <div class="credit">template by @Sasera</div>
+            
+            <div class="header">
+                <div class="title-box">Ketentuan Fanart Karakter</div>
+                <div class="legend">
+                    <label class="checkbox-item"><input type="checkbox"> Ya</label>
+                    <label class="checkbox-item"><input type="checkbox"> Tidak</label>
+                    <label class="checkbox-item"><input type="checkbox"> Mungkin <span>(Harap konfirmasi)</span></label>
                 </div>
             </div>
 
-            <!-- Kolom Kanan -->
-            <div class="right-col">
-                <div class="checkbox-grid">
-                    <label class="checkbox-item"><input type="checkbox"> Mengubah Gaya Rambut</label>
-                    <label class="checkbox-item"><input type="checkbox"> Tema Depresif</label>
-                    
-                    <label class="checkbox-item"><input type="checkbox"> Mengubah Pakaian</label>
-                    <label class="checkbox-item"><input type="checkbox"> Manic Mood</label>
-                    
-                    <label class="checkbox-item"><input type="checkbox"> Crossdress</label>
-                    <label class="checkbox-item"><input type="checkbox"> Tema Kematian</label>
-                    
-                    <label class="checkbox-item"><input type="checkbox"> Gender Swap</label>
-                    <label class="checkbox-item"><input type="checkbox"> Dengan Alkohol</label>
-                    
-                    <label class="checkbox-item"><input type="checkbox"> Mengubah Spesies</label>
-                    <label class="checkbox-item"><input type="checkbox"> Obat Terlarang (Drugs)</label>
-                    
-                    <label class="checkbox-item"><input type="checkbox"> Mengubah Bentuk Tubuh</label>
-                    <label class="checkbox-item"><input type="checkbox"> Merokok</label>
+            <div class="main-content">
+                <!-- Kolom Kiri -->
+                <div class="left-col">
+                    <div class="char-info">
+                        <div class="image-box" onclick="document.getElementById('file-upload').click()">
+                            <span>Klik untuk mengunggah<br>gambar karakter</span>
+                            <img id="char-img" src="" alt="Karakter">
+                            <input type="file" id="file-upload" style="display: none;" accept="image/*" onchange="previewImage(event)">
+                        </div>
+                        <div class="info-fields">
+                            <div class="field">Nama: <input type="text" spellcheck="false"></div>
+                            <div class="field">Spesies: <input type="text" spellcheck="false"></div>
+                            <div class="field">Art Tag: <input type="text" spellcheck="false"></div>
+                        </div>
+                    </div>
+
+                    <div class="slider-section">
+                        <div class="slider-title">Lewd</div>
+                        <div class="range-container">
+                            <!-- Custom HTML Slider -->
+                            <div class="custom-slider" onclick="moveSlider(event, this)">
+                                <div class="slider-track"></div>
+                                <div class="slider-thumb" style="left: 0%;"></div>
+                            </div>
+                            <div class="range-labels">
+                                <div>Wholesome only</div>
+                                <div>Sexy<br>Dressed</div>
+                                <div>Naked<br>Tasteful</div>
+                                <div>Full NSFW</div>
+                            </div>
+                        </div>
+
+                        <div class="slider-title">Blood & Gore</div>
+                        <div class="range-container">
+                            <!-- Custom HTML Slider -->
+                            <div class="custom-slider" onclick="moveSlider(event, this)">
+                                <div class="slider-track"></div>
+                                <div class="slider-thumb" style="left: 0%;"></div>
+                            </div>
+                            <div class="range-labels">
+                                <div>Tanpa Luka<br>Tanpa Memar</div>
+                                <div>Sedikit Darah<br>Tanpa Memar</div>
+                                <div>Darah & Memar<br>Signifikan</div>
+                                <div>Full NSFW</div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
-                <div style="margin-top: 10px;">
-                    <label class="checkbox-item-full"><input type="checkbox"> Bersama Karakter Lain (Friendly)</label>
-                    <label class="checkbox-item-full"><input type="checkbox"> Bersama Karakter Lain (Hostile)</label>
-                    <label class="checkbox-item-full"><input type="checkbox"> Bersama Karakter Lain (Romantic)</label>
+                <!-- Kolom Kanan -->
+                <div class="right-col">
+                    <div class="checkbox-grid">
+                        <label class="checkbox-item"><input type="checkbox"> Mengubah Gaya Rambut</label>
+                        <label class="checkbox-item"><input type="checkbox"> Depressive</label>
+                        
+                        <label class="checkbox-item"><input type="checkbox"> Mengubah Pakaian</label>
+                        <label class="checkbox-item"><input type="checkbox"> Manic Mood</label>
+                        
+                        <label class="checkbox-item"><input type="checkbox"> Crossdress</label>
+                        <label class="checkbox-item"><input type="checkbox"> Death</label>
+                        
+                        <label class="checkbox-item"><input type="checkbox"> Gender Swap</label>
+                        <label class="checkbox-item"><input type="checkbox"> With Alcohol</label>
+                        
+                        <label class="checkbox-item"><input type="checkbox"> Mengubah Spesies</label>
+                        <label class="checkbox-item"><input type="checkbox"> Drugs</label>
+                        
+                        <label class="checkbox-item"><input type="checkbox"> Mengubah Bentuk Tubuh</label>
+                        <label class="checkbox-item"><input type="checkbox"> Smoking</label>
+                    </div>
+
+                    <div style="margin-top: 10px;">
+                        <label class="checkbox-item-full"><input type="checkbox"> Bersama Karakter Lain (Friendly)</label>
+                        <label class="checkbox-item-full"><input type="checkbox"> Bersama Karakter Lain (Hostile)</label>
+                        <label class="checkbox-item-full"><input type="checkbox"> Bersama Karakter Lain (Romantic)</label>
+                        <label class="checkbox-item-full"><input type="checkbox"> Konten LGBTQ+</label>
+                    </div>
                 </div>
             </div>
         </div>
@@ -373,20 +404,45 @@
             }
         }
 
+        // Fungsi agar Slider Custom bisa diklik & pindah posisi
+        function moveSlider(event, element) {
+            const rect = element.getBoundingClientRect();
+            // Menghitung posisi klik relatif terhadap lebar garis slider
+            let x = event.clientX - rect.left;
+            let percent = (x / rect.width) * 100;
+
+            // Snap/Mengkunci posisi ke 4 titik (0%, 33.3%, 66.6%, 100%)
+            let snapPercent = 0;
+            if (percent < 16) snapPercent = 0;
+            else if (percent < 50) snapPercent = 33.33;
+            else if (percent < 83) snapPercent = 66.66;
+            else snapPercent = 100;
+
+            // Pindahkan tuas ke posisi yang diklik
+            element.querySelector('.slider-thumb').style.left = snapPercent + '%';
+        }
+
         // Fungsi untuk mendownload elemen HTML menjadi gambar PNG
         function downloadImage() {
-            const captureArea = document.getElementById('capture-area');
+            // FIX: Otomatis scroll ke atas terlebih dahulu agar gambar tidak terpotong
+            window.scrollTo({ top: 0, behavior: 'instant' });
             
-            html2canvas(captureArea, {
-                scale: 2, // Kualitas HD
-                backgroundColor: null
-            }).then(canvas => {
-                // Buat link download
-                const link = document.createElement('a');
-                link.download = 'Ketentuan_Fanart_Karakter.png';
-                link.href = canvas.toDataURL('image/png');
-                link.click();
-            });
+            setTimeout(() => {
+                const captureArea = document.getElementById('capture-area');
+                
+                html2canvas(captureArea, {
+                    scale: 2, // Kualitas HD
+                    useCORS: true, // Membantu memuat gambar jika ada masalah keamanan
+                    scrollX: 0,
+                    scrollY: 0
+                }).then(canvas => {
+                    // Buat link download
+                    const link = document.createElement('a');
+                    link.download = 'Ketentuan_Fanart_Karakter.png';
+                    link.href = canvas.toDataURL('image/png');
+                    link.click();
+                });
+            }, 100); // Beri jeda 100ms agar halaman selesai scroll sebelum mengambil gambar
         }
     </script>
 </body>
